@@ -343,7 +343,7 @@
    [:dup]
    [:dup]
    [:arraylength]
-   [:istore 2]
+   [:istore 2] ;; Array length
    
    [:ldc 0]
    [:faload]
@@ -355,23 +355,23 @@
    
    [:ldc 2]
    [:faload]
-   [:fstore 5] ;
+   [:fstore 5] ; Z
 
    [:ldc 0]
-   [:istore 6] ;; Counter
+   [:istore 7] ;; Counter
    
    [:mark :L/LOOP]
 
    ;; Check loop confidtion
-   [:iload 6]
+   [:iload 7]
    [:iload 2]
    [:if-icmpge :L/RET]
 
    ;; Step the counter
-   [:iload 6]
+   [:iload 7]
    [:ldc 4]
    [:iadd]
-   [:istore 6]
+   [:istore 7]
    ;
    ;[:ladd]
    ;[:lstore 6]
