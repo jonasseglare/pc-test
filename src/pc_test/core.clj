@@ -2,7 +2,9 @@
   (:require [no.disassemble :as nd]
             [clj-java-decompiler.core :refer [decompile]]
             [proteus :refer [let-mutable]]
-            [primitive-math :as pmath])
+            [primitive-math :as pmath]
+            [insn.core :as insn]
+            [insn.clojure :as bc])
   (:import [BBox]))
 
 (set! *warn-on-reflection* true)
@@ -333,6 +335,10 @@
 (defn inspect-disassemble [fun]
   (assert (fn? fun))
   (println (nd/disassemble fun)))
+
+(bc/defn byte-code-bbox ^"[F" [^"[F" data]
+  [[:aload 1]
+   [:areturn]])
 
 (comment
   (benchmark-many [java-version
