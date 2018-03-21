@@ -362,9 +362,20 @@
    
    [:mark :L/LOOP]
 
+   ;; Check loop confidtion
    [:iload 6]
    [:iload 2]
    [:if-icmpge :L/RET]
+
+   ;; Step the counter
+   [:iload 6]
+   [:ldc 4]
+   [:iadd]
+   [:istore 6]
+   ;
+   ;[:ladd]
+   ;[:lstore 6]
+   
 
    [:goto :L/LOOP]
    [:mark :L/RET]
