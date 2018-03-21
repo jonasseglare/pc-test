@@ -340,9 +340,34 @@
   [[:aload 1]
    [:checkcast "[F"]
    [:dup]
+   [:dup]
+   [:dup]
    [:arraylength]
    [:istore 2]
+   
    [:ldc 0]
+   [:faload]
+   [:fstore 3] ; X
+   
+   [:ldc 1]
+   [:faload]
+   [:fstore 4] ; Y
+   
+   [:ldc 2]
+   [:faload]
+   [:fstore 5] ;
+
+   [:ldc 0]
+   [:istore 6] ;; Counter
+   
+   [:mark :L/LOOP]
+
+   [:iload 6]
+   [:iload 2]
+   [:if-icmpge :L/RET]
+
+   [:goto :L/LOOP]
+   [:mark :L/RET]
    
    [:aload 1]
    [:areturn]])
