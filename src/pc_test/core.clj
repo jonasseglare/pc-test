@@ -338,6 +338,13 @@
 
 (bc/defn byte-code-bbox ^"[F" [^"[F" data]
   [[:aload 1]
+   [:checkcast "[F"]
+   [:dup]
+   [:arraylength]
+   [:istore 2]
+   [:ldc 0]
+   
+   [:aload 1]
    [:areturn]])
 
 (comment
