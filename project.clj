@@ -10,4 +10,5 @@
                  [proteus "0.1.6"]
                  [primitive-math "0.1.6"]
                  [insn "0.2.1"]
+                 [org.codehaus.janino/janino "3.0.8"]
                  [bluebell/utils "0.1.3-SNAPSHOT"]])

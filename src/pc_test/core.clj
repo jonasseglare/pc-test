@@ -5,7 +5,8 @@
             [primitive-math :as pmath]
             [insn.core :as insn]
             [insn.clojure :as bc])
-  (:import [BBox]))
+  (:import [BBox]
+           [DoubleValue]))
 
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
@@ -41,14 +42,14 @@
           (if (and (Float/isFinite x)
                    (Float/isFinite y)
                    (Float/isFinite z))
-            (recur (unchecked-add-int i 4)
+            (recur (unchecked-add-int i (int 4))
                    (min minx x)
                    (max maxx x)
                    (min miny y)
                    (max maxy y)
                    (min minz z)
                    (max maxz z))
-            (recur (unchecked-add-int i 4)
+            (recur (unchecked-add-int i (int 4))
                    minx
                    maxx
                    miny
@@ -59,39 +60,13 @@
           )
         [minx maxx miny maxy minz maxz]))))
 
-(defn tuned-good-compute-bbox [^floats data]
-  (let [n (alength data)]
-    (loop [i (long 0)
-           minx (float (aget data 0))
-           maxx (float (aget data 0))
-           miny (float (aget data 1))
-           maxy (float (aget data 1))
-           minz (float (aget data 2))
-           maxz (float (aget data 2))]
-      (if (< i n)
-        (let [x (float (aget data (unchecked-add i 0)))
-              y (float (aget data (unchecked-add i 1)))
-              z (float (aget data (unchecked-add i 2)))]
-          (if (and (Float/isFinite x)
-                   (Float/isFinite y)
-                   (Float/isFinite z))
-            (recur (unchecked-add-int i 4)
-                   (min minx x)
-                   (max maxx x)
-                   (min miny y)
-                   (max maxy y)
-                   (min minz z)
-                   (max maxz z))
-            (recur (unchecked-add-int i 4)
-                   minx
-                   maxx
-                   miny
-                   maxy
-                   minz
-                   maxz
-                   ))
-          )
-        [minx maxx miny maxy minz maxz]))))
+
+
+
+
+
+
+
 
 (defn good-pmath-compute-bbox [^floats data]
   (let [n (alength data)]
@@ -244,6 +219,41 @@
         i))
     acc))
 
+(defn mutable-field-compute-bbox [^floats data]
+  (let [n (alength data)
+        xmin (DoubleValue.)
+        xmax (DoubleValue.)
+        ymin (DoubleValue.)
+        ymax (DoubleValue.)
+        zmin (DoubleValue.)
+        zmax (DoubleValue.)]
+    (loop [i (long 0)
+           ]
+      (if (< i n)
+        (let [x (float (aget data (unchecked-add i 0)))
+              y (float (aget data (unchecked-add i 1)))
+              z (float (aget data (unchecked-add i 2)))]
+          (if (and (Float/isFinite x)
+                   (Float/isFinite y)
+                   (Float/isFinite z))
+            (do
+              (set! (.value xmin) (min (.value xmin) x))
+              (set! (.value xmax) (max (.value xmax) x))
+              (set! (.value ymin) (min (.value ymin) y))
+              (set! (.value ymax) (max (.value ymax) y))
+              (set! (.value zmin) (min (.value zmin) z))
+              (set! (.value zmax) (max (.value zmax) z)))
+            )
+          (recur (unchecked-add i 4)))
+        i))
+    [(.value xmin)
+     (.value xmax)
+     (.value ymin)
+     (.value ymax)
+     (.value zmin)
+     (.value zmax)
+     ]))
+
 (defmacro update-bds [[minv maxv] v]
   `(do
      (var-set ~minv (min (deref ~minv) ~v))
@@ -359,6 +369,9 @@
 
    [:ldc 0]
    [:istore 7] ;; Counter
+
+   [:ldc 0]
+   [:istore 8]
    
    [:mark :L/LOOP]
 
@@ -372,11 +385,14 @@
    [:ldc 4]
    [:iadd]
    [:istore 7]
-   ;
-   ;[:ladd]
-   ;[:lstore 6]
-   
 
+   ;;;; JUNK
+   [:iload 8]
+   [:ldc 4]
+   [:iadd]
+   [:istore 8]
+
+;;;;; JUNK
    [:goto :L/LOOP]
    [:mark :L/RET]
    
@@ -384,10 +400,12 @@
    [:areturn]])
 
 (comment
-  (benchmark-many [java-version
+  (benchmark-many [;byte-code-bbox
+                   java-version
                    good-compute-bbox
-                   tuned-good-compute-bbox
-                   good-pmath-compute-bbox
+                   mutable-field-compute-bbox
+                   ;tuned-good-compute-bbox
+                   ;good-pmath-compute-bbox
                    arr-compute-bbox
                    ;proteus-compute-bbox
                    ;lime-compute-bbox
