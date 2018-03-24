@@ -4,9 +4,11 @@
             [proteus :refer [let-mutable]]
             [primitive-math :as pmath]
             [insn.core :as insn]
+            
             [insn.clojure :as bc])
   (:import [BBox]
-           [DoubleValue]))
+           [DoubleValue]
+           [org.apache.commons.math3.util FastMath]))
 
 (set! *warn-on-reflection* true)
 ;;(set! *unchecked-math* :warn-on-boxed)
@@ -61,7 +63,37 @@
         [minx maxx miny maxy minz maxz]))))
 
 
-
+(defn primitive-compute-bbox-new [^floats data]
+  (let [n (alength data)]
+    (loop [i (int 0)
+           minx (aget data 0)
+           maxx (aget data 0)
+           miny (aget data 1)
+           maxy (aget data 1)
+           minz (aget data 2)
+           maxz (aget data 2)]
+      (if (< i n)
+        (let [x (aget data (unchecked-add i 0))
+              y (aget data (unchecked-add i 1))
+              z (aget data (unchecked-add i 2))]
+          (if (and (Float/isFinite x)
+                   (Float/isFinite y)
+                   (Float/isFinite z))
+            (recur (unchecked-add-int i 4)
+                   (FastMath/min (float minx) x)
+                   (FastMath/max (float maxx) x)
+                   (FastMath/min (float miny) y)
+                   (FastMath/max (float maxy) y)
+                   (FastMath/min (float minz) z)
+                   (FastMath/max (float maxz) z))
+            (recur (unchecked-add-int i 4)
+                   minx
+                   maxx
+                   miny
+                   maxy
+                   minz
+                   maxz)))
+        [minx maxx miny maxy minz maxz]))))
 
 
 
@@ -399,30 +431,35 @@
    [:aload 1]
    [:areturn]])
 
+(defn run-benchmark []
+  (benchmark-many [java-version
+                   good-compute-bbox
+                   primitive-compute-bbox-new
+                   ]))
+
+
+;; ;; What I get
+;; java-version
+;; "Elapsed time: 21.243212 msecs"
+;; good-compute-bbox
+;; "Elapsed time: 76.081984 msecs"
+;; primitive-compute-bbox-new
+;; "Elapsed time: 99.216807 msecs"
+
+
 (comment
   (benchmark-many [;byte-code-bbox
                    java-version
                    good-compute-bbox
-                   mutable-field-compute-bbox
+                   primitive-compute-bbox-new
+                   ;mutable-field-compute-bbox
                    ;tuned-good-compute-bbox
                    ;good-pmath-compute-bbox
-                   arr-compute-bbox
+                    ;arr-compute-bbox
                    ;proteus-compute-bbox
                    ;lime-compute-bbox
                    ;lvars-compute-bbox
                    ])
-  java-version
-"Elapsed time: 21.385044 msecs"
-good-compute-bbox
-"Elapsed time: 105.513528 msecs"
-arr-compute-bbox
-"Elapsed time: 171.804541 msecs"
-proteus-compute-bbox
-"Elapsed time: 237.169185 msecs"
-lime-compute-bbox
-"Elapsed time: 416.293138 msecs"
-lvars-compute-bbox
-"Elapsed time: 2547.549587 msecs"
-  nil)
+  )
 
 

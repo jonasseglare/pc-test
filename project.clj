@@ -11,4 +11,5 @@
                  [primitive-math "0.1.6"]
                  [insn "0.2.1"]
                  [org.codehaus.janino/janino "3.0.8"]
+                 [org.apache.commons/commons-math3 "3.6.1"]
                  [bluebell/utils "0.1.3-SNAPSHOT"]])
